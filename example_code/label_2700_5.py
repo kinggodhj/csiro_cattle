@@ -18,20 +18,19 @@ from __future__ import division
 from __future__ import print_function
 
 import argparse
-
 import numpy as np
 import os
 import tensorflow as tf
 import pandas as pd
 
-# Define this after your imports. This is similar to python argparse except more verbose
-FLAGS = tf.app.flags.FLAGS
-
-tf.app.flags.DEFINE_string('image','/home/heejin_king/workspace/cattleProject/cattleImage/csiro','/home/heejin_king/workspace/cattleProject/cattleImage/csiro')
-
-# use listdir to list the images in the target folder
-filelist = os.listdir(FLAGS.image)
-
+def search(dirname):
+  fileName = []
+  for path, dirs, files in os.walk(dirname):
+    for file in files:
+      if os.path.splitext(file)[-1] == '.JPG' or os.path.splitext(file)[-1] == '.jpg':
+        fileName.append(os.path.join(path, file))
+  return fileName
+  
 def load_graph(model_file):
   graph = tf.Graph()
   graph_def = tf.GraphDef()
@@ -72,7 +71,6 @@ def read_tensor_from_image_file(file_name,
 
   return result
 
-
 def load_labels(label_file):
   label = []
   proto_as_ascii_lines = tf.gfile.GFile(label_file).readlines()
@@ -84,14 +82,14 @@ def load_labels(label_file):
 if __name__ == "__main__":
   all = []
   
-  df = pd.DataFrame(np.arange(len(filelist)*5).reshape(len(filelist),5), columns=("1", "2", "3","4","5"), index = filelist)
-  # now iterate over the objects in the list
-  for img in filelist:
-    # load image
-    file_name = '/home/heejin_king/workspace/cattleProject/cattleImage/csiro/'+img
-    #file_name = "tensorflow/examples/label_image/data/grace_hopper.jpg"
-    model_file = "/tmp/2700_0.1_brightness_5/output_graph.pb"
-    label_file = "/tmp/2700_0.1_brightness_5/output_labels.txt"
+  fileName = search('/Your image Path/') 
+  
+  df = pd.DataFrame(np.arange(5).reshape(1,5), columns = ('1','2','3','4','5'))
+  for img in fileName:
+
+    file_name = img
+    model_file = "/Your model path/output_graph.pb"
+    label_file = "/Your model path/output_labels.txt"
     input_height = 299
     input_width = 299
     input_mean = 0
@@ -153,21 +151,14 @@ if __name__ == "__main__":
 
     top_k = results.argsort()[-5:][::-1]
     labels = load_labels(label_file)
-    #df = pd.DataFrame(np.arange(len(filelist)*5).reshape(len(filelist),5), columns=("1", "2", "3","4","5"), index = filelist) 
-    #print(filelist)
-    #df.set_index(filelist)
+
     count = 1
     for i in top_k:
       print(labels[i], results[i])
       info = str(labels[i])+'\n'+str(results[i]) 
-      #print('info:',info)
-      df.loc[img,str(count)] = info
-      #df.append({str(count):info}, ignore_index = True)
+      df.loc[img[(img.rfind('/')+1):],str(count)] = info
       count += 1 
-
-      #print(df)    
-  #if results[i] == max(results[i]):
-  
+  df = df.drop(0)
   df.to_csv("2700_5_output.csv")
 
 
