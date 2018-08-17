@@ -80,7 +80,6 @@ def load_labels(label_file):
 
 
 if __name__ == "__main__":
-  all = []
   
   fileName = search('/Your image Path/') 
   
